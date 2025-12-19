@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:model/core/supabase_client.dart';
 import 'package:model/viewmodel/auth_view_model.dart';
+import 'package:model/viewmodel/profile_view_model.dart';
 import 'package:model/views/auth/login_view.dart';
 import 'package:model/views/home_view.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,8 +19,11 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AuthViewModel(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthViewModel()),
+        ChangeNotifierProvider(create: (_) => ProfileViewModel()),
+      ],
       child: Consumer<AuthViewModel>(
         builder: (context, value, child) {
           return MaterialApp(
@@ -28,7 +33,9 @@ class MyApp extends StatelessWidget {
                 seedColor: const Color.fromARGB(255, 58, 183, 121),
               ),
             ),
-            home: auth.session != null ? HomeView() : LoginView(),
+            home: Supabase.instance.client.auth.currentSession != null
+                ? HomeView()
+                : LoginView(),
           );
         },
       ),
