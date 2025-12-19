@@ -60,7 +60,7 @@ class _UserProfileViewState extends State<UserProfileView> {
                           radius: 50,
                           backgroundImage: profile?.avatarUrl != null
                               ? NetworkImage(profile!.avatarUrl!)
-                              : AssetImage('assets/default_avatar.png')
+                              : AssetImage('assets/default_avatar.jpg')
                                     as ImageProvider,
                           child: profile?.avatarUrl == null
                               ? Icon(Icons.person, size: 50)
