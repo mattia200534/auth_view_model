@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:model/models/user_profiles.dart';
 import 'package:model/viewmodel/profile_view_model.dart';
@@ -16,6 +19,7 @@ class _UserProfileViewState extends State<UserProfileView> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   DateTime? _selectedBirthDate;
+  File? _selectedfile;
 
   @override
   void dispose() {
@@ -37,6 +41,20 @@ class _UserProfileViewState extends State<UserProfileView> {
     });
   }
 
+  Future<void> _pickImageFromGallery() async {
+    // Logica per selezionare un'immagine dalla galleria o scattare una foto
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+    if (pickedFile != null) {
+      setState(() {
+        _selectedfile = File(pickedFile.path);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final profileVM = Provider.of<ProfileViewModel>(context);
@@ -53,12 +71,12 @@ class _UserProfileViewState extends State<UserProfileView> {
                   children: [
                     Center(
                       child: GestureDetector(
-                        onTap: () {
-                          // Logica per cambiare l'avatar
-                        },
+                        onTap: _pickImageFromGallery,
                         child: CircleAvatar(
                           radius: 50,
-                          backgroundImage: profile?.avatarUrl != null
+                          backgroundImage: _selectedfile != null
+                              ? FileImage(_selectedfile!)
+                              : profile?.avatarUrl != null
                               ? NetworkImage(profile!.avatarUrl!)
                               : AssetImage('assets/default_avatar.jpg')
                                     as ImageProvider,
