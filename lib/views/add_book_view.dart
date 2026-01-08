@@ -1,4 +1,10 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:model/core/book_image_service.dart';
+import 'package:model/core/storage_service.dart';
+import 'package:model/models/book_image.dart';
 import 'package:model/models/book_model.dart';
 import 'package:model/viewmodel/book_view_model.dart';
 import 'package:provider/provider.dart';
@@ -36,6 +42,7 @@ class _AddBookViewState extends State<AddBookView> {
   final _commentController = TextEditingController();
   BookStatus? _selectedStatus;
   double _rating = 3.0;
+  List<File> _selectedimages = [];
 
   @override
   void dispose() {
@@ -74,6 +81,25 @@ class _AddBookViewState extends State<AddBookView> {
           context,
           listen: false,
         ).addBook(newBook);
+
+        if (_selectedimages.isNotEmpty) {
+          final storageService = StorageService();
+          final imageService = BookImageService();
+          for (final imageFile in _selectedimages) {
+            final imageUrl = await storageService.uploadImage(
+              imageFile,
+              newBook.id,
+            );
+
+            final bookImage = BookImage(
+              id: const Uuid().v4(),
+              bookId: newBook.id,
+              imageUrl: imageUrl,
+            );
+            await imageService.createBookImage(bookImage);
+          }
+        }
+
         if (context.mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -86,6 +112,19 @@ class _AddBookViewState extends State<AddBookView> {
           SnackBar(content: Text('Errore nel salvataggio del Libro')),
         );
       }
+    }
+  }
+
+  Future<void> _pickmultipleImages() async {
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      type: FileType.image,
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedimages = result.paths.map((path) => File(path!)).toList();
+      });
     }
   }
 
@@ -189,6 +228,25 @@ class _AddBookViewState extends State<AddBookView> {
                 ),
                 maxLines: 4,
               ),
+
+              ElevatedButton(
+                onPressed: _pickmultipleImages,
+                child: Text('Scegli Immagini'),
+              ),
+
+              if (_selectedimages.isNotEmpty)
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _selectedimages.map((image) {
+                    return Image.file(
+                      image,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                    );
+                  }).toList(),
+                ),
               ElevatedButton.icon(
                 onPressed: _submitForm,
                 icon: Icon(Icons.add),
